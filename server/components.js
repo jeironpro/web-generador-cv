@@ -1,5 +1,7 @@
+// Componentes de renderizado PDF para el CV
 import { Mail, MapPin, Phone, Calendar, Globe, Share2 } from 'lucide-static';
 
+// Convierte un SVG de Lucide a un path string para PDFKit
 function lucideToPath(svg) {
     let d = '';
     const elemRe = /<(\w+)([^>]*)\/>/g;
@@ -34,6 +36,7 @@ function lucideToPath(svg) {
     return d;
 }
 
+// Mapa de iconos Lucide para contacto (email, ubicación, teléfono, etc.)
 const ICONS = {
     email: lucideToPath(Mail),
     address: lucideToPath(MapPin),
@@ -43,6 +46,7 @@ const ICONS = {
     social: lucideToPath(Share2)
 };
 
+// Dibuja un icono Lucide en el PDF en la posición indicada
 function drawIcon(doc, name, ix, iy) {
     const d = ICONS[name];
     if (!d) return;
@@ -53,17 +57,20 @@ function drawIcon(doc, name, ix, iy) {
     doc.restore();
 }
 
+// Renderiza el panel izquierdo del CV: foto, contacto, habilidades e idiomas
 export function renderLeftPanel(doc, data, profile, t, theme) {
     const pw = theme.leftPanel.width;
     const pad = 22;
     const x = pad;
     const w = pw - pad * 2;
 
+    // Fondo del panel izquierdo
     doc.save();
     doc.rect(0, 0, pw, doc.page.height).fill(theme.leftPanel.bg);
 
     let y = 30;
 
+    // Foto de perfil (recorte circular)
     const photoR = 35;
     const photoCX = x + w / 2;
     if (data.photo) {
@@ -83,6 +90,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
 
     y += photoR * 2 + 10;
 
+    // Descripción corta
     doc.font('Helvetica')
        .fontSize(8)
        .fillColor(theme.leftPanel.text)
@@ -92,6 +100,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
     doc.moveTo(x, y).lineTo(x + w, y).lineWidth(0.5).strokeColor(theme.leftPanel.muted).stroke();
     y += 8;
 
+    // Información de contacto con iconos
     const infoItems = [
         { icon: 'email', value: data.email },
         { icon: 'address', value: data.address },
@@ -111,6 +120,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
         }
     }
 
+    // Redes sociales
     if (data.socialLinks && data.socialLinks.length) {
         for (const s of data.socialLinks) {
             drawIcon(doc, 'social', x, y);
@@ -126,6 +136,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
     doc.moveTo(x, y).lineTo(x + w, y).lineWidth(0.5).strokeColor(theme.leftPanel.muted).stroke();
     y += 10;
 
+    // Habilidades digitales agrupadas por categoría
     if (profile.digitalSkills && profile.digitalSkills.length) {
         doc.font('Helvetica-Bold')
            .fontSize(7.5)
@@ -157,6 +168,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
     y += 10;
     doc.y = y;
 
+    // Idiomas
     if (profile.languageSkills && profile.languageSkills.length) {
         doc.font('Helvetica-Bold')
            .fontSize(7.5)
@@ -177,6 +189,7 @@ export function renderLeftPanel(doc, data, profile, t, theme) {
     doc.restore();
 }
 
+// Renderiza el encabezado de una sección (texto + línea subrayada)
 export function renderSectionHeading(doc, text, opts) {
     doc.font('Helvetica-Bold')
        .fontSize(opts.size || 10)
@@ -191,12 +204,14 @@ export function renderSectionHeading(doc, text, opts) {
     doc.y += 6;
 }
 
+// Renderiza una línea de tiempo (experiencia laboral o educación)
 export function renderTimelineSection(doc, entries, opts) {
     const cx = opts.x;
     const cw = opts.width;
     let y = opts.y;
 
     for (const entry of entries) {
+        // Fechas
         const date = entry.dates || '';
         if (date) {
             doc.font('Helvetica')
@@ -206,6 +221,7 @@ export function renderTimelineSection(doc, entries, opts) {
             y = doc.y + 1;
         }
 
+        // Título (ocupación o titulación)
         const title = entry.occupation || entry.qualification || '';
         doc.font('Helvetica-Bold')
            .fontSize(opts.titleSize || 10)
@@ -213,6 +229,7 @@ export function renderTimelineSection(doc, entries, opts) {
            .text(title, cx, y, { width: cw, lineGap: 1 });
         y = doc.y + 1;
 
+        // Metadatos (empleador/institución + ubicación)
         const meta = [entry.employer || entry.institution, entry.location].filter(Boolean).join('  |  ');
         if (meta) {
             doc.font('Helvetica')
@@ -222,6 +239,7 @@ export function renderTimelineSection(doc, entries, opts) {
             y = doc.y + 2;
         }
 
+        // Descripción (lista de viñetas)
             if (entry.description && entry.description.length) {
                 doc.font('Helvetica')
                    .fontSize(opts.bodySize || 8.5)
@@ -238,6 +256,7 @@ export function renderTimelineSection(doc, entries, opts) {
     return y + (opts.spacing || 6);
 }
 
+// Renderiza una lista genérica con viñetas
 export function renderBulletList(doc, items, opts) {
     const x = opts.x;
     const w = opts.width;

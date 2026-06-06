@@ -1,3 +1,4 @@
+// Orquestador de generación de PDF con PDFKit
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import { defaultTemplate } from './default.js';
@@ -9,10 +10,12 @@ import {
     renderBulletList
 } from './components.js';
 
+// Comprueba si el contenido actual necesita un salto de página
 function shouldPageBreak(doc, m, needed = 60) {
     return doc.y > doc.page.height - m - needed;
 }
 
+// Renderiza el CV completo en un archivo PDF
 export function renderCV(data, lang, outputPath) {
     return new Promise((resolve, reject) => {
         const t = labels[lang] || labels.es;
@@ -38,20 +41,24 @@ export function renderCV(data, lang, outputPath) {
         doc.on('error', reject);
         doc.pipe(ws);
 
+    // Dimensiones del diseño de dos columnas
     const lpW = theme.leftPanel.width;
     const rightX = lpW + 18;
     const pw = doc.page.width - rightX - m;
 
+    // Helper para salto de página condicional
     function check(needed) {
         if (shouldPageBreak(doc, m, needed)) {
             doc.addPage();
         }
     }
 
+    // Panel izquierdo (foto, contacto, habilidades, idiomas)
     renderLeftPanel(doc, data, profile, t, theme);
 
     doc.y = 40;
 
+    // Panel derecho: título profesional y nombre
     doc.font('Helvetica')
        .fontSize(11)
        .fillColor(theme.rightPanel.muted)
@@ -64,6 +71,7 @@ export function renderCV(data, lang, outputPath) {
        .text(data.name, rightX, doc.y, { width: pw });
     doc.y += 8;
 
+    // Línea separadora debajo del nombre
     doc.moveTo(rightX, doc.y)
        .lineTo(rightX + pw, doc.y)
        .lineWidth(0.5)
@@ -71,6 +79,7 @@ export function renderCV(data, lang, outputPath) {
        .stroke();
     doc.y += 10;
 
+    // Sección: experiencia laboral
     if (profile.workExperience && profile.workExperience.length) {
         check(80);
         renderSectionHeading(doc, t.workExperience, {
@@ -96,6 +105,7 @@ export function renderCV(data, lang, outputPath) {
         doc.y += 6;
     }
 
+    // Sección: educación
     if (profile.education && profile.education.length) {
         check(60);
         renderSectionHeading(doc, t.education, {
@@ -119,6 +129,7 @@ export function renderCV(data, lang, outputPath) {
         doc.y += 6;
     }
 
+    // Sección: habilidades de comunicación
     if (profile.communicationSkills && profile.communicationSkills.length) {
         check(50);
         renderSectionHeading(doc, t.communicationSkills, {
@@ -136,6 +147,7 @@ export function renderCV(data, lang, outputPath) {
         doc.y += 6;
     }
 
+    // Sección: habilidades organizativas
     if (profile.organisationalSkills && profile.organisationalSkills.length) {
         check(50);
         renderSectionHeading(doc, t.organisationalSkills, {
@@ -153,6 +165,7 @@ export function renderCV(data, lang, outputPath) {
         doc.y += 6;
     }
 
+    // Sección: habilidades técnicas
     if (profile.jobRelatedSkills && profile.jobRelatedSkills.length) {
         check(50);
         renderSectionHeading(doc, t.jobRelatedSkills, {
@@ -170,6 +183,7 @@ export function renderCV(data, lang, outputPath) {
         doc.y += 6;
     }
 
+    // Sección: información adicional
     if (profile.additionalInfo) {
         check(30);
         renderSectionHeading(doc, t.additionalInfo, {

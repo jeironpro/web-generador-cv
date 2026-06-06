@@ -1,6 +1,10 @@
+// Componente principal del generador de CV web
+// Incluye un asistente de 4 pasos: Datos personales, Perfiles multilingüe, Revisión y Descarga
 import { useState } from "react";
 import ParticleBackground from "./ParticleBackground";
+import StepReview from "./StepReview";
 
+// Icono de Material Symbols (Google Fonts)
 function Icon({ name, className = "" }) {
     return (
         <span
@@ -11,9 +15,11 @@ function Icon({ name, className = "" }) {
     );
 }
 
+// Mapas y constantes globales
 const LANG_MAP = { es: "Español", ca: "Català", en: "English" };
 const LANG_CODES = ["es", "ca", "en"];
 
+// Valores por defecto para los formularios dinámicos
 const EMPTY_WORK = {
     dates: "",
     occupation: "",
@@ -23,6 +29,8 @@ const EMPTY_WORK = {
 };
 const EMPTY_EDU = { dates: "", qualification: "", institution: "" };
 const EMPTY_CAT = { category: "", items: [""] };
+
+// Plantilla de perfil vacío para cada idioma
 const EMPTY_PROFILE = {
     title: "",
     shortDescription: "",
@@ -44,12 +52,15 @@ function initProfiles() {
     return p;
 }
 
+// Pasos del asistente de creación del CV
 const STEPS = [
     { id: 0, label: "Datos", icon: "person" },
     { id: 1, label: "Perfiles", icon: "description" },
-    { id: 2, label: "Descarga", icon: "download" },
+    { id: 2, label: "Revisar", icon: "visibility" },
+    { id: 3, label: "Descarga", icon: "download" },
 ];
 
+// Secciones del perfil profesional (colapsables en el paso 1)
 const PROFILE_SECTIONS = [
     {
         key: "intro",
@@ -107,10 +118,14 @@ const PROFILE_SECTIONS = [
     },
 ];
 
+// ============== Helpers y componentes de UI ==============
+
+// Combina clases CSS condicionales (como clsx)
 function cn(...cls) {
     return cls.filter(Boolean).join(" ");
 }
 
+// Clases base para inputs, labels y botones (Tailwind)
 const inputBase =
     "w-full bg-white/80 backdrop-blur-sm border border-slate-200/70 rounded-xl px-4 py-2.5 text-sm " +
     "text-slate-800 placeholder:text-slate-400 " +
@@ -127,6 +142,7 @@ const BtnPrimary =
     "transition-all duration-200 hover:shadow-xl hover:shadow-navy-300/50 hover:-translate-y-0.5 " +
     "active:translate-y-0 active:shadow-md";
 
+// Campo de formulario con label
 function Field({ label, children, className }) {
     return (
         <label className={cn("block", className)}>
@@ -136,6 +152,7 @@ function Field({ label, children, className }) {
     );
 }
 
+// Input de texto estándar
 function Input({ label, value, onChange, type = "text", ...props }) {
     return (
         <Field label={label}>
@@ -150,6 +167,7 @@ function Input({ label, value, onChange, type = "text", ...props }) {
     );
 }
 
+// Área de texto
 function TextArea({ label, value, onChange }) {
     return (
         <Field label={label}>
@@ -163,6 +181,7 @@ function TextArea({ label, value, onChange }) {
     );
 }
 
+// Lista dinámica de inputs (añadir/eliminar ítems)
 function ArrayField({ label, values, onChange, placeholder }) {
     const set = (i, v) => onChange(values.map((x, j) => (j === i ? v : x)));
     const add = () => onChange([...values, ""]);
@@ -206,6 +225,7 @@ function ArrayField({ label, values, onChange, placeholder }) {
     );
 }
 
+// Tarjeta con bordes para entradas dinámicas (experiencia, educación, etc.)
 function EntryCard({ children, onDelete, title, color }) {
     return (
         <div
@@ -243,6 +263,7 @@ function EntryCard({ children, onDelete, title, color }) {
     );
 }
 
+// Contenedor con efecto glassmorphism (fondo translúcido + blur)
 function GlassCard({ children, className }) {
     return (
         <div
@@ -256,6 +277,9 @@ function GlassCard({ children, className }) {
     );
 }
 
+// ===== Componentes de navegación del asistente =====
+
+// Panel lateral con los 3 pasos del asistente
 function StepWizard({ current, onChange }) {
     return (
         <div className="hidden lg:flex flex-col gap-3 w-56 shrink-0">
@@ -365,28 +389,7 @@ function StepWizard({ current, onChange }) {
     );
 }
 
-function TabBar({ active, onChange }) {
-    return (
-        <div className="inline-flex gap-1 bg-slate-100/80 backdrop-blur-sm p-1 rounded-2xl border border-slate-200/60 shadow-sm">
-            {LANG_CODES.map((code) => (
-                <button
-                    key={code}
-                    type="button"
-                    onClick={() => onChange(code)}
-                    className={cn(
-                        "px-5 py-2 text-sm font-semibold rounded-xl transition-all duration-200",
-                        active === code
-                            ? "bg-white text-navy-700 shadow-md shadow-slate-200/80 scale-105"
-                            : "text-slate-500 hover:text-slate-700 hover:bg-white/50",
-                    )}
-                >
-                    {LANG_MAP[code]}
-                </button>
-            ))}
-        </div>
-    );
-}
-
+// Sección colapsable del perfil profesional (Paso 1)
 function SectionCard({ icon, label, color, children, open, onToggle, step }) {
     return (
         <GlassCard
@@ -456,7 +459,7 @@ function SectionCard({ icon, label, color, children, open, onToggle, step }) {
     );
 }
 
-/* ====== STEP 0: Personal ====== */
+// ==================== PASO 0: DATOS PERSONALES ====================
 function StepPersonal({
     data,
     setData,
@@ -710,12 +713,13 @@ function StepPersonal({
     );
 }
 
-/* ====== STEP 1: Profiles ====== */
+// ==================== PASO 1: PERFILES MULTILINGÜE (flujo secuencial por idioma) ====================
 function StepProfiles({
     data,
     setData,
     activeLang,
     setActiveLang,
+    langsDone,
     profileExpanded,
     toggleProfile,
     onPrev,
@@ -748,11 +752,30 @@ function StepProfiles({
                             Contenido del CV
                         </h2>
                         <p className="text-xs text-slate-500">
-                            Completa la información para cada idioma
+                            Editando: {LANG_MAP[activeLang]}
                         </p>
                     </div>
                 </div>
-                <TabBar active={activeLang} onChange={setActiveLang} />
+                {/* Píldoras para cambiar entre idiomas ya completados */}
+                {langsDone.length > 0 && (
+                    <div className="flex gap-1.5">
+                        {langsDone.map((code) => (
+                            <button
+                                key={code}
+                                type="button"
+                                onClick={() => setActiveLang(code)}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-semibold rounded-xl transition-all",
+                                    activeLang === code
+                                        ? "bg-navy-600 text-white shadow-md"
+                                        : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80",
+                                )}
+                            >
+                                {LANG_MAP[code]}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="space-y-4">
@@ -1141,12 +1164,77 @@ function StepProfiles({
     );
 }
 
-/* ====== STEP 2: Download ====== */
-function StepDownload({ activeLang, loading, handleSubmit, setStep }) {
+// ==================== PASO 3: DESCARGA ====================
+// Genera los 3 CVs (ES/CA/EN) de una sola vez y muestra los disponibles para descargar
+// Paso de descarga: genera los CVs solo para los idiomas que el usuario completó
+function StepDownload({ data, photo, setStep, langsDone }) {
+    const [blobs, setBlobs] = useState({});
+    const [generating, setGenerating] = useState(false);
+    const [generated, setGenerated] = useState(false);
+    const [errors, setErrors] = useState([]);
+
+    async function generateAll() {
+        if (!data.name.trim()) {
+            alert("El nombre es obligatorio");
+            return;
+        }
+        setGenerating(true);
+        setErrors([]);
+        setBlobs({});
+
+        const results = await Promise.allSettled(
+            langsDone.map(async (lang) => {
+                const fd = new FormData();
+                fd.append("data", JSON.stringify(data));
+                fd.append("lang", lang);
+                if (photo) fd.append("photo", photo);
+                const res = await fetch("/api/generate-cv", { method: "POST", body: fd });
+                if (!res.ok) {
+                    let msg;
+                    try { const j = await res.json(); msg = j.error; } catch { msg = res.statusText; }
+                    throw new Error(`${LANG_MAP[lang]}: ${msg}`);
+                }
+                return { lang, blob: await res.blob() };
+            })
+        );
+
+        const newBlobs = {};
+        const newErrors = [];
+        for (const r of results) {
+            if (r.status === "fulfilled") {
+                newBlobs[r.value.lang] = r.value.blob;
+            } else {
+                newErrors.push(r.reason.message);
+            }
+        }
+        setBlobs(newBlobs);
+        setErrors(newErrors);
+        setGenerated(true);
+        setGenerating(false);
+    }
+
+    function downloadBlob(lang) {
+        const blob = blobs[lang];
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cv-${lang}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    const allDone = generated && Object.keys(blobs).length === langsDone.length;
+
     return (
         <div className="animate-scale-in flex flex-col items-center justify-center py-8">
             <GlassCard className="w-full max-w-lg p-8 text-center space-y-6">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-navy-500 to-indigo-600 flex items-center justify-center mx-auto shadow-lg shadow-navy-200/50 animate-float">
+                <div className={cn(
+                    "w-20 h-20 rounded-3xl flex items-center justify-center mx-auto shadow-lg animate-float",
+                    allDone
+                        ? "bg-gradient-to-br from-emerald-500 to-teal-600"
+                        : "bg-gradient-to-br from-navy-500 to-indigo-600",
+                )}>
                     <svg
                         className="w-9 h-9 text-white"
                         fill="none"
@@ -1154,71 +1242,111 @@ function StepDownload({ activeLang, loading, handleSubmit, setStep }) {
                         stroke="currentColor"
                         strokeWidth={1.8}
                     >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
+                        {allDone ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        )}
                     </svg>
                 </div>
 
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800">
-                        Todo listo
+                        {allDone ? "CVs generados" : generating ? "Generando CVs..." : "Descargar CV"}
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">
-                        Tu CV se generará al instante
+                        {allDone
+                            ? "Los CVs están listos. Elige cuál descargar:"
+                            : generating
+                                ? "Generando los CVs..."
+                                : `Genera los CVs (${langsDone.map(c => LANG_MAP[c]).join(", ")})`}
                     </p>
                 </div>
 
-                <div className="inline-flex items-center gap-3 px-5 py-3 bg-slate-50/80 rounded-2xl border border-slate-200/60">
-                    <span className="text-sm text-slate-500">Idioma:</span>
-                    <span className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                        {LANG_MAP[activeLang]}
-                    </span>
-                </div>
+                {/* Barra de progreso durante la generación */}
+                {generating && (
+                    <div className="space-y-2">
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-navy-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: (Object.keys(blobs).length / langsDone.length) * 100 + "%" }}
+                            />
+                        </div>
+                        <p className="text-xs text-slate-400">
+                            {Object.keys(blobs).length} de {langsDone.length}
+                        </p>
+                    </div>
+                )}
+
+                {/* Botones de descarga cuando ya están generados */}
+                {generated && (
+                    <div className="space-y-3">
+                        {langsDone.map((code) => {
+                            const ready = !!blobs[code];
+                            return (
+                                <button
+                                    key={code}
+                                    type="button"
+                                    onClick={() => ready && downloadBlob(code)}
+                                    disabled={!ready}
+                                    className={cn(
+                                        BtnPrimary,
+                                        "w-full justify-center text-base py-3.5",
+                                        code === 'es' && "bg-gradient-to-r from-navy-600 to-indigo-600",
+                                        code === 'ca' && "bg-gradient-to-r from-amber-600 to-orange-600",
+                                        code === 'en' && "bg-gradient-to-r from-emerald-600 to-teal-600",
+                                        !ready && "opacity-40 pointer-events-none",
+                                    )}
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 5v9" />
+                                    </svg>
+                                    Descargar CV — {LANG_MAP[code]}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Errores */}
+                {errors.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-left">
+                        <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-1">Errores</p>
+                        {errors.map((e, i) => (
+                            <p key={i} className="text-sm text-red-700">{e}</p>
+                        ))}
+                    </div>
+                )}
 
                 <div className="space-y-3">
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className={cn(
-                            BtnPrimary,
-                            "w-full justify-center bg-gradient-to-r from-navy-600 to-indigo-600 text-base py-3.5",
-                            loading && "opacity-80 pointer-events-none",
-                        )}
-                    >
-                        {loading ? (
-                            <>
-                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Generando...
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 5v9"
-                                    />
-                                </svg>
-                                Generar PDF
-                            </>
-                        )}
-                    </button>
+                    {!generated && !generating && (
+                        <button
+                            type="button"
+                            onClick={generateAll}
+                            className={cn(BtnPrimary, "w-full justify-center bg-gradient-to-r from-navy-600 to-indigo-600 text-base py-3.5")}
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 5v9" />
+                            </svg>
+                            Generar CVs ({langsDone.map(c => c.toUpperCase()).join(", ")})
+                        </button>
+                    )}
+                    {generating && (
+                        <button
+                            type="button"
+                            disabled
+                            className={cn(BtnPrimary, "w-full justify-center bg-gradient-to-r from-navy-600 to-indigo-600 text-base py-3.5 opacity-80 pointer-events-none")}
+                        >
+                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Generando...
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={() => setStep(1)}
                         className="w-full px-5 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
                     >
-                        Volver a perfiles
+                        Volver a perfiles {langsDone.length > 0 && `(${langsDone.length})`}
                     </button>
                 </div>
             </GlassCard>
@@ -1226,6 +1354,7 @@ function StepDownload({ activeLang, loading, handleSubmit, setStep }) {
     );
 }
 
+// Botones de navegación (Anterior / Continuar) para cada paso
 function NavButtons({ step, onPrev, onNext }) {
     return (
         <div className="flex justify-between pt-2">
@@ -1253,7 +1382,7 @@ function NavButtons({ step, onPrev, onNext }) {
             ) : (
                 <div />
             )}
-            {step < 2 && (
+            {step < 3 && (
                 <button
                     type="button"
                     onClick={onNext}
@@ -1282,7 +1411,7 @@ function NavButtons({ step, onPrev, onNext }) {
     );
 }
 
-/* ====== APP ====== */
+// ==================== COMPONENTE PRINCIPAL ====================
 export default function App() {
     const [data, setData] = useState({
         name: "",
@@ -1298,45 +1427,33 @@ export default function App() {
     const [photoPreview, setPhotoPreview] = useState(null);
     const [activeLang, setActiveLang] = useState("es");
     const [step, setStep] = useState(0);
-    const [loading, setLoading] = useState(false);
     const [profileExpanded, setProfileExpanded] = useState({});
+    // Idiomas que el usuario ha completado
+    const [langsDone, setLangsDone] = useState([]);
+    // Idiomas que el usuario rechazó al preguntarle si quería añadirlos
+    const [langsSkipped, setLangsSkipped] = useState([]);
+    // Controla si se muestra el modal para añadir otro idioma
+    const [showLangPrompt, setShowLangPrompt] = useState(false);
+    // Idioma que se está preguntando en el modal
+    const [pendingLang, setPendingLang] = useState("");
 
     function toggleProfile(key) {
         setProfileExpanded((s) => ({ ...s, [key]: !s[key] }));
     }
 
-    async function handleSubmit() {
-        if (!data.name.trim()) {
-            alert("El nombre es obligatorio");
-            return;
-        }
-        setLoading(true);
-        try {
-            const fd = new FormData();
-            fd.append("data", JSON.stringify(data));
-            fd.append("lang", activeLang);
-            if (photo) fd.append("photo", photo);
-            const res = await fetch("/api/generate-cv", {
-                method: "POST",
-                body: fd,
-            });
-            if (!res.ok) {
-                let msg;
-                try { const j = await res.json(); msg = j.error; } catch { msg = await res.text().catch(() => res.statusText); }
-                alert('Error: ' + msg);
-                return;
-            }
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `cv-${activeLang}.pdf`;
-            a.click();
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            alert("Error de conexión: " + e.message);
-        } finally {
-            setLoading(false);
+    // Al hacer clic en "Continuar" en Perfiles: guarda el idioma actual como completado
+    // y si quedan idiomas sin completar ni saltar, pregunta si quiere añadirlos
+    function handleProfileNext() {
+        const updated = [...new Set([...langsDone, activeLang])];
+        setLangsDone(updated);
+        const remaining = LANG_CODES.filter(
+            (c) => !updated.includes(c) && !langsSkipped.includes(c),
+        );
+        if (remaining.length > 0) {
+            setPendingLang(remaining[0]);
+            setShowLangPrompt(true);
+        } else {
+            setStep(2);
         }
     }
 
@@ -1344,23 +1461,6 @@ export default function App() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative">
             <ParticleBackground />
             <div className="relative z-10">
-                {/* Loading */}
-                {loading && (
-                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-                        <div className="bg-white rounded-3xl px-12 py-10 shadow-2xl text-center animate-scale-in">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-navy-500 to-indigo-600 flex items-center justify-center mx-auto mb-5 shadow-lg">
-                                <div className="w-7 h-7 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
-                            </div>
-                            <p className="text-base font-bold text-slate-800">
-                                Generando tu CV
-                            </p>
-                            <p className="text-sm text-slate-400 mt-1">
-                                Un momento por favor...
-                            </p>
-                        </div>
-                    </div>
-                )}
-
                 {/* Header */}
                 <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-slate-200/60">
                     <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -1441,23 +1541,87 @@ export default function App() {
                                     setData={setData}
                                     activeLang={activeLang}
                                     setActiveLang={setActiveLang}
+                                    langsDone={langsDone}
                                     profileExpanded={profileExpanded}
                                     toggleProfile={toggleProfile}
                                     onPrev={() => setStep(0)}
-                                    onNext={() => setStep(2)}
+                                    onNext={handleProfileNext}
                                 />
                             )}
                             {step === 2 && (
-                                <StepDownload
+                                <StepReview
+                                    data={data}
+                                    photoPreview={photoPreview}
                                     activeLang={activeLang}
-                                    loading={loading}
-                                    handleSubmit={handleSubmit}
+                                    setActiveLang={setActiveLang}
+                                    onPrev={() => setStep(1)}
+                                    onNext={() => setStep(3)}
+                                />
+                            )}
+                            {step === 3 && (
+                                <StepDownload
+                                    data={data}
+                                    photo={photo}
                                     setStep={setStep}
+                                    langsDone={langsDone}
                                 />
                             )}
                         </div>
                     </div>
                 </div>
+
+                {/* Modal: pregunta si quiere añadir otro idioma antes de continuar */}
+                {showLangPrompt && (
+                    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-8 text-center space-y-5 border border-white/60 animate-scale-in">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto shadow-lg">
+                                <span className="material-symbols-outlined text-white text-2xl">translate</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">
+                                    ¿Quieres añadir el CV en {LANG_MAP[pendingLang]}?
+                                </h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    Puedes tener tu CV en varios idiomas. Los idiomas que no añadas ahora no se generarán.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    type="button"
+                                    // Cambia al idioma pendiente para que el usuario lo rellene
+                                    onClick={() => {
+                                        setActiveLang(pendingLang);
+                                        setShowLangPrompt(false);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-6 py-2.5 font-semibold text-sm text-white rounded-xl bg-gradient-to-r from-navy-600 to-indigo-600 hover:shadow-lg transition-all"
+                                >
+                                    Sí, añadir {LANG_MAP[pendingLang]}
+                                </button>
+                                <button
+                                    type="button"
+                                    // Guarda el idioma como saltado y busca el siguiente pendiente
+                                    onClick={() => {
+                                        const newSkipped = [...langsSkipped, pendingLang];
+                                        setLangsSkipped(newSkipped);
+                                        setShowLangPrompt(false);
+                                        const remaining = LANG_CODES.filter(
+                                            (c) => !langsDone.includes(c) && !newSkipped.includes(c),
+                                        );
+                                        if (remaining.length > 0) {
+                                            setPendingLang(remaining[0]);
+                                            setShowLangPrompt(true);
+                                        } else {
+                                            setStep(2);
+                                        }
+                                    }}
+                                    className="inline-flex items-center gap-2 px-6 py-2.5 font-semibold text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                                >
+                                    No, continuar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <footer className="text-center py-8 text-xs text-slate-400">
                     Hecho con React + Vite + PDFKit

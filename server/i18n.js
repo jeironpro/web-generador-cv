@@ -1,3 +1,5 @@
+// Traducciones de las secciones del CV para cada idioma
+// Usadas por el renderizador PDF para mostrar los encabezados en el idioma correcto
 export const labels = {
     es: {
         workExperience: 'EXPERIENCIA LABORAL',

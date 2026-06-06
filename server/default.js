@@ -1,3 +1,5 @@
+// Tema visual por defecto para el PDF
+// Define colores, fuentes y dimensiones del diseño de dos columnas
 export const defaultTemplate = {
     page: {
         size: 'A4',

@@ -1,3 +1,4 @@
+// Fondo animado de partículas conectadas entre sí
 import { useRef, useEffect } from "react";
 
 export default function ParticleBackground() {
@@ -8,6 +9,7 @@ export default function ParticleBackground() {
         const ctx = canvas.getContext("2d");
         let anim;
 
+        // Ajusta el canvas al tamaño de la ventana
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -15,6 +17,7 @@ export default function ParticleBackground() {
         resize();
         window.addEventListener("resize", resize);
 
+        // Crea 60 partículas con posición, velocidad, radio y opacidad aleatorias
         const particles = Array.from({ length: 60 }, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -24,6 +27,7 @@ export default function ParticleBackground() {
             alpha: Math.random() * 0.4 + 0.1,
         }));
 
+        // Bucle de animación: mueve partículas y dibuja conexiones
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -32,14 +36,17 @@ export default function ParticleBackground() {
                 p.x += p.vx;
                 p.y += p.vy;
 
+                // Rebota en los bordes del canvas
                 if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
                 if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
+                // Dibuja la partícula
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(43, 108, 176, ${p.alpha})`;
                 ctx.fill();
 
+                // Dibuja líneas entre partículas cercanas (< 150px)
                 for (let j = i + 1; j < particles.length; j++) {
                     const q = particles[j];
                     const dx = p.x - q.x;
@@ -60,6 +67,7 @@ export default function ParticleBackground() {
         }
         draw();
 
+        // Limpieza al desmontar el componente
         return () => {
             cancelAnimationFrame(anim);
             window.removeEventListener("resize", resize);
