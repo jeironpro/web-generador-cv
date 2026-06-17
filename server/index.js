@@ -7,6 +7,9 @@ import { unlinkSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+// Puerto del servidor
+const PORT = process.env.PORT || 3001;
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Configura multer para guardar fotos subidas en /uploads
 const upload = multer({ dest: join(__dirname, 'uploads') });
@@ -49,8 +52,7 @@ app.post('/api/generate-cv', upload.single('photo'), async (req, res, next) => {
 
 // Middleware de errores
 app.use((err, _req, res, _next) => {
-    console.error(err);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-app.listen(3001, () => console.log('Server on http://localhost:3001'));
+app.listen(PORT);
