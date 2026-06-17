@@ -51,7 +51,7 @@ app.post('/api/generate-cv', upload.single('photo'), async (req, res, next) => {
 // Servir frontend React compilado
 app.use(express.static(path.join(__dirname, '../dist')));
 
-app.get('*', (_req, res) => {
+app.get('/*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
