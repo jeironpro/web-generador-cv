@@ -10,8 +10,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Configura multer para guardar fotos subidas en /uploads
-const upload = multer({ dest: join(__dirname, 'uploads') });
 mkdirSync(join(__dirname, 'uploads'), { recursive: true });
+const upload = multer({ dest: join(__dirname, 'uploads') });
 mkdirSync(join(__dirname, 'output'), { recursive: true });
 
 const app = express();
@@ -52,15 +52,18 @@ app.post('/api/generate-cv', upload.single('photo'), async (req, res, next) => {
 // Servir frontend React compilado
 app.use(express.static(path.join(__dirname, '../dist')));
 
-app.use((_req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
-
 // Middleware de errores
 app.use((err, _req, res, _next) => {
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
+// Fallback para React Router
+app.use((_req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 // Puerto del servidor
 const PORT = process.env.PORT || 3001;
-app.listen(PORT);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
