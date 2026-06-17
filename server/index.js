@@ -2,13 +2,11 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
+import path from 'path';
 import { renderCV } from './renderer.js';
 import { unlinkSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-
-// Puerto del servidor
-const PORT = process.env.PORT || 3001;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Configura multer para guardar fotos subidas en /uploads
@@ -50,9 +48,18 @@ app.post('/api/generate-cv', upload.single('photo'), async (req, res, next) => {
     }
 });
 
+// Servir frontend React compilado
+app.use(express.static(path.join(__dirname, '../dist')));
+
+app.get('*', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 // Middleware de errores
 app.use((err, _req, res, _next) => {
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
+// Puerto del servidor
+const PORT = process.env.PORT || 3001;
 app.listen(PORT);
