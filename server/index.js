@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Configura multer para guardar fotos subidas en /uploads
 const upload = multer({ dest: join(__dirname, 'uploads') });
+mkdirSync(join(__dirname, 'uploads'), { recursive: true });
 mkdirSync(join(__dirname, 'output'), { recursive: true });
 
 const app = express();
@@ -51,7 +52,7 @@ app.post('/api/generate-cv', upload.single('photo'), async (req, res, next) => {
 // Servir frontend React compilado
 app.use(express.static(path.join(__dirname, '../dist')));
 
-app.get('/*', (_req, res) => {
+app.use((_req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
