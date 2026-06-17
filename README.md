@@ -1,6 +1,6 @@
-# CV Web
+# Web Generador CV
 
-Generador de currículum vitae en PDF con formulario web en 3 pasos.
+Generador de currículum vitae en PDF con formulario web en 4 pasos.
 
 ## Stack
 
@@ -48,7 +48,7 @@ Sirve los archivos estáticos de `dist/` desde Express en el puerto 3001.
 ```
 cv-web/
 ├── src/                    # Frontend React
-│   ├── App.jsx             # Wizard de 3 pasos + lógica principal
+│   ├── App.jsx             # Wizard de 4 pasos + lógica principal
 │   ├── ParticleBackground.jsx
 │   ├── index.css           # Tailwind + animaciones
 │   └── main.jsx
