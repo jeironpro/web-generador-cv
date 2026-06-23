@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ParticleBackground from "./ParticleBackground";
 import StepReview from "./StepReview";
+import { generateCV } from "./pdf-renderer";
 
 // Icono de Material Symbols (Google Fonts)
 function Icon({ name, className = "" }) {
@@ -1182,19 +1183,23 @@ function StepDownload({ data, photo, setStep, langsDone }) {
         setErrors([]);
         setBlobs({});
 
+        // Convert photo File to data URL if provided
+        const getPhotoDataUrl = () => {
+            if (!photo) return Promise.resolve(null);
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(photo);
+            });
+        };
+        const photoDataUrl = await getPhotoDataUrl();
+
         const results = await Promise.allSettled(
             langsDone.map(async (lang) => {
-                const fd = new FormData();
-                fd.append("data", JSON.stringify(data));
-                fd.append("lang", lang);
-                if (photo) fd.append("photo", photo);
-                const res = await fetch("/api/generate-cv", { method: "POST", body: fd });
-                if (!res.ok) {
-                    let msg;
-                    try { const j = await res.json(); msg = j.error; } catch { msg = res.statusText; }
-                    throw new Error(`${LANG_MAP[lang]}: ${msg}`);
-                }
-                return { lang, blob: await res.blob() };
+                const doc = generateCV(data, lang, photoDataUrl);
+                const blob = doc.output('blob');
+                return { lang, blob };
             })
         );
 
